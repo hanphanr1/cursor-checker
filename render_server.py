@@ -252,8 +252,6 @@ class Handler(BaseHTTPRequestHandler):
                     .replace("__HITS__", "\n".join(hits["hits"]) or "(chua co)")
                     .replace("__FREE__", "\n".join(hits["free"]) or "(chua co)")
                     .replace("__LOG__", "\n".join(st["log"][-30:]) or "-"))
-            self._send(200, html.encode())
-        elif path == "/status":
             with _state_lock:
                 st = dict(STATE)
             with checker.stats_lock:
@@ -314,14 +312,44 @@ def _track_run_dir():
             if rd and rd != STATE["run_dir"]:
                 STATE["run_dir"] = rd
         time.sleep(1)
+def _pin_proxy_ips(lines):
+    """Resolve hostname proxy -> IP 1 lan khi boot (Render DNS giai do 15 thread
+    bi curl(5) 'Could not resolve proxy'). Giu nguyen IP dong. Return list moi."""
+    import socket
+    resolved = {}
+    for l in lines:
+        s = l.strip()
+        if not s:
+            continue
+        body = s.split("://", 1)[1] if "://" in s else s
+        host = body.rsplit("@", 1)[-1].rsplit(":", 1)[0]
+        if host and not host[0].isdigit() and host not in resolved:
+            try:
+                resolved[host] = socket.getaddrinfo(host, None, socket.AF_INET)[0][4][0]
+            except Exception:
+                resolved[host] = None
+    out = []
+    for l in lines:
+        s = l.strip()
+        if not s:
+            continue
+        body = s.split("://", 1)[1] if "://" in s else s
+        host = body.rsplit("@", 1)[-1].rsplit(":", 1)[0]
+        if host and not host[0].isdigit() and resolved.get(host):
+            out.append(s.replace(host, resolved[host], 1))
+        else:
+            out.append(s)
+    return out
 
 
 def main():
-    # proxies tu env
+    # proxies tu env (pin IP: DNS Render chat khi 15 bot resolve lien tuc -> curl(5))
     prox = _env_text("PROXIES_B64", "PROXIES_GZ_B64")
     if prox:
-        (DATA / "proxies.txt").write_text(prox, encoding="utf-8")
-        _log(f"proxies tu env: {len([l for l in prox.splitlines() if l.strip()])} dong")
+        lines = [l for l in prox.splitlines() if l.strip()]
+        pinned = _pin_proxy_ips(lines)
+        (DATA / "proxies.txt").write_text("\n".join(pinned) + "\n", encoding="utf-8")
+        _log(f"proxies tu env: {len(lines)} dong -> pin IP {sum(1 for a, b in zip(lines, pinned) if a != b)} host")
     else:
         _log("KHONG co PROXIES env — checker se chay khong proxy (Render IP datacenter, de bi radar)")
     # solver urls tu env da xu ly o config (CFSOLVE_URLS)
