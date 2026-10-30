@@ -1,0 +1,6 @@
+# Cursor Account Checker - Dependencies
+# Cai: pip install -r requirements.txt
+
+curl_cffi>=0.7,<1.0
+requests>=2.28,<3.0
+colorama>=0.4

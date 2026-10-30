@@ -1,0 +1,34 @@
+# === SECRETS / DATA — khong push, khong docker ===
+accounts*.txt
+proxies*.txt
+keys.txt
+tokens.txt
+_captured_headers.txt
+render_data/
+results/
+notes/
+_done/
+Done/
+_harvest/
+_archive/
+__pycache__/
+*.bak
+*.bak_*
+*.png
+*.pyc
+debug_patch.png
+_one_acc.txt
+recheck_*.txt
+all_hits*.txt
+_captcha_probe*
+.forge/
+
+# === GIU LAI (can cho checker chay tren Render) ===
+# _captured_signals.txt  -> fingerprint blob, bat buoc
+# keys.example.txt       -> mau huong dan
+!_captured_signals.txt
+!keys.example.txt
+proxies.txt.radarbak
+proxies.txt.*
+_smoke*
+_proxies_render.env

@@ -1,0 +1,24 @@
+# Copy thanh keys.txt roi dien key (1 key / dong).
+# # = comment. Section trong = bo qua solver do.
+# Chain: rendercf -> rendercf2 -> turntitle -> nocaptchaai -> captchasonic -> 2captcha -> capsolver
+
+[rendercf]
+# url=https://cfsolve.onrender.com
+
+[rendercf2]
+# url=https://cfsolve-2.onrender.com
+
+[turntitle]
+# url=https://turntitle.onrender.com
+# token=
+[nocaptchaai]
+# user-uuid-.... hoac nocap_...
+
+[captchasonic]
+# sonic_...
+
+[capsolver]
+# CAP-xxxxxxxx
+
+[2captcha]
+# xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
