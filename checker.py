@@ -106,7 +106,9 @@ def ensure_out_dir():
     """
     global OUT_DIR
     ts = time.strftime("%Y%m%d-%H%M%S")
-    OUT_DIR = os.path.join(OUT_DIR, f"run-{ts}")
+    # reset tu base (render_server chay nhieu main() trong 1 process —
+    # truoc day OUT_DIR lồng run-x/run-y)
+    OUT_DIR = os.path.join(str(Path(__file__).resolve().parent / "results"), f"run-{ts}")
     Path(OUT_DIR).mkdir(parents=True, exist_ok=True)
 
 
