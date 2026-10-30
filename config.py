@@ -86,11 +86,11 @@ UA = (
 IMPERSONATE_PROFILE = "chrome124"
 
 # ====================== NETWORK ======================
-TIMEOUT = 25           # timeout moi request (s)
-MAX_PROXY_SWITCH = 3   # doi proxy toi da 3 lan (radar WorkOS flag theo IP — IP thu 3 co khi sach)
-PROXY_COOLDOWN = 8     # proxy nghi sau moi lan dung (s)
-HOST_COOLDOWN_OK = 30   # host nghi sau login OK (s) - CF can thoi gian ha block
-HOST_COOLDOWN_FAIL = 90  # host nghi lau hon sau fail (CF 403 / radar / network)
+TIMEOUT = 15           # proxy song thuong <8s/request — 25s chi keo dai cho proxy chet
+MAX_PROXY_SWITCH = 3   # doi proxy toi da 3 lan (radar WorkOS flag theo IP)
+PROXY_COOLDOWN = 5     # proxy nghi sau moi lan dung (s)
+HOST_COOLDOWN_OK = 20   # host nghi sau login OK (s)
+HOST_COOLDOWN_FAIL = 45  # host nghi sau fail — 90s lam pool can kit tren Render (87 host)
 
 # ---- CF 403 latch: JA3 Android qua khi Chrome desktop bi block ----
 # Live 2026-10-07: 4 exit bi 403 voi chrome124/131/136 deu tra 200 + asid voi
