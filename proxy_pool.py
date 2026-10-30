@@ -7,6 +7,8 @@ Proxy Pool - Quan ly proxy rotation + cooldown + per-proxy lock
 - Fail counter: proxy fail >= 5 lan -> skip
 """
 
+import random
+import string
 import time
 import threading
 from urllib.parse import urlparse
@@ -100,6 +102,16 @@ class ProxyPool:
                         continue
                     if p["_lock"].acquire(blocking=False):
                         self.host_busy.add(host)
+                        if "{NEW}" in p.get("_str", ""):
+                            sid = "".join(random.choices(
+                                string.ascii_lowercase + string.digits, k=12))
+                            np = self._parse_proxy(p["_str"].replace("{NEW}", sid))
+                            if np:
+                                p["http"] = np["http"]
+                                p["https"] = np["https"]
+                                p["_host"] = "oxy-" + sid
+                                self.host_busy.discard(host)
+                                self.host_busy.add(p["_host"])
                         return p
             time.sleep(0.1)
         return None
