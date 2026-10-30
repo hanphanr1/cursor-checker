@@ -27,8 +27,8 @@ class ProxyPool:
                     p["_lock"] = threading.Lock()
                     p["_fails"] = 0
                     p["_free_at"] = 0
+                    p["_str"] = line          # truoc _host: _host_of dung _str cho rotating
                     p["_host"] = self._host_of(p)
-                    p["_str"] = line
                     self.proxies.append(p)
             except Exception:
                 pass
@@ -68,9 +68,14 @@ class ProxyPool:
             return None
     @staticmethod
     def _host_of(proxy):
-        """Hostname cua gateway proxy (nhieu dong tren 1 gateway = 1 host)."""
+        """Hostname cua gateway proxy (nhieu dong tren 1 gateway = 1 host).
+        ROTATING gateway (oxylabs): moi dong = 1 session/IP rieng -> key = full line
+        (2026-10-31: 87 IP tinh bi WorkOS flag dan sau ~2000 acc -> rotating la nen)."""
         try:
-            return urlparse(proxy["http"]).hostname or proxy["http"]
+            host = urlparse(proxy["http"]).hostname or proxy["http"]
+            if "oxylabs" in (host or ""):
+                return proxy.get("_str", host)
+            return host
         except Exception:
             return proxy.get("http", "")
 
