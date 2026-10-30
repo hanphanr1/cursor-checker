@@ -112,19 +112,25 @@ except Exception as _e:
 
 
 def _signals_b64(ua=None):
-    """Generate base64-encoded fingerprint signals blob (fresh createdAtMs).
+    """Generate base64-encoded fingerprint signals blob (fresh timestamps).
 
-    GIU fingerprint capture (canvas/webGL/hashes). Chi refresh createdAtMs.
-    userAgent phai KHOP header cua session: chrome124 binh thuong = UA config,
-    fallback android = UA_FALLBACK (blob desktop + UA android header -> radar).
+    2026-10-31: WorkOS cham DO TUOI cua blob (probe: blob cu -> radar 28%,
+    blob moi -> 15%). Refresh TAT CA *AtMs (createdAtMs/collectedAtMs/
+    submittedAtMs) + jitter timings nhe — khong chi createdAtMs nhu cu.
+    userAgent phai KHOP header cua session.
     """
     sig = dict(_BASE_SIGNALS)
-    sig["createdAtMs"] = int(time.time() * 1000)
+    now = int(time.time() * 1000)
+    sig["createdAtMs"] = now - random.randint(3000, 9000)
+    sig["collectedAtMs"] = sig["createdAtMs"] - random.randint(500, 2000)
+    sig["submittedAtMs"] = now
+    if isinstance(sig.get("timings"), dict):
+        t = dict(sig["timings"])
+        if "collectorsStarted" in t:
+            t["collectorsStarted"] = random.randint(10, 40)
+        sig["timings"] = t
     sig["userAgent"] = ua or UA
     return base64.b64encode(json.dumps(sig, separators=(",", ":")).encode()).decode()
-
-
-# ====================== HELPERS ======================
 def _boundary():
     return "----WebKitFormBoundary" + "".join(
         random.choices(string.ascii_letters + string.digits, k=16)
