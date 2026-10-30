@@ -114,7 +114,7 @@ CAPTCHA_MAX_WAIT = 120
 
 # yeatcloud. [turntitle] url= / token= trong keys.txt override neu co.
 YEAT_CLOUD_URL = "https://turntitle-cloud-solver-production.up.railway.app"
-YEAT_CLOUD_TOKEN = "07c0220eabeba73f058a8c39addf5351a5332be287faefc2"
+YEAT_CLOUD_TOKEN = ""   # doc tu keys.txt [turntitle] token= (khong hardcode)
 YEAT_CLOUD_CONCURRENCY = 8
 YEAT_CLOUD_MIN_GAP = 0.2
 YEAT_CLOUD_TIMEOUT = 45
