@@ -125,9 +125,14 @@ def _supervisor(accounts_path: str):
             break
         time.sleep(0.5)
     t.join()
-    # queue ke tiep
+    # queue ke tiep — 2026-10-31c: BO QUA chinh path vua chay
+    # (submit append path nay luc start -> pop(0) lay lai no -> re-run combo da done)
+    nxt = None
     with _state_lock:
-        nxt = STATE["queued"].pop(0) if STATE["queued"] else None
+        for i, q in enumerate(STATE["queued"]):
+            if q != accounts_path:
+                nxt = STATE["queued"].pop(i)
+                break
     if nxt:
         _log(f"chay tiep tu queue: {nxt}")
         threading.Thread(target=_supervisor, args=(nxt,), daemon=True).start()
