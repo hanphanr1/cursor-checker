@@ -97,8 +97,10 @@ def _run_checker(accounts_path: str):
         _log(f"checker main exception: {type(e).__name__}: {e}")
         ok = False
     finally:
-        # marker done: boot-heal khong chay lai combo da xong
+        # marker: running- -> done- (heal khong chay lai combo da xong)
         try:
+            rn = DATA / ("running-" + Path(accounts_path).name)
+            rn.unlink(missing_ok=True)
             (DATA / ("done-" + Path(accounts_path).name)).write_text("ok", encoding="utf-8")
         except Exception:
             pass
@@ -131,11 +133,18 @@ def _supervisor(accounts_path: str):
         threading.Thread(target=_supervisor, args=(nxt,), daemon=True).start()
 
 
-def submit_accounts(text: str) -> str:
-    """Ghi combo -> file; start ngay hoac queue. Return path."""
+def submit_accounts(text: str, path: str = None) -> str:
+    """Ghi combo -> file; start ngay hoac queue. path != None: duong dan san co (heal)."""
     lines = [l.strip() for l in text.splitlines() if l.strip()]
-    path = str(DATA / f"combo-{time.strftime('%Y%m%d-%H%M%S')}.txt")
+    if not path:
+        path = str(DATA / f"combo-{time.strftime('%Y%m%d-%H%M%S')}.txt")
+    name = Path(path).name
+    # 2026-10-31b: chong double-run (heal + upload cung combo -> radar x2, CPU x2, Render crash loop)
+    if (DATA / ("done-" + name)).exists() or (DATA / ("running-" + name)).exists():
+        _log(f"bo qua {name} (done/running marker)")
+        return path
     Path(path).write_text("\n".join(lines) + "\n", encoding="utf-8")
+    (DATA / ("running-" + name)).write_text("1", encoding="utf-8")
     with _state_lock:
         busy = STATE["running"]
         if not busy:
@@ -377,7 +386,7 @@ def main():
             if p.stat().st_size < 10:
                 continue
             _log(f"self-heal: phuc hoi combo {p.name}")
-            submit_accounts(p.read_text(encoding="utf-8"))
+            submit_accounts(p.read_text(encoding="utf-8"), path=str(p))
     threading.Thread(target=_heal, daemon=True).start()
     srv = ThreadingHTTPServer(("0.0.0.0", PORT), Handler)
     _log(f"dashboard: http://0.0.0.0:{PORT}/ (upload POST /upload)")
