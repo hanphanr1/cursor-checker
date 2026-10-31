@@ -97,10 +97,12 @@ def _run_checker(accounts_path: str):
         _log(f"checker main exception: {type(e).__name__}: {e}")
         ok = False
     finally:
+        # marker done: boot-heal khong chay lai combo da xong
+        try:
+            (DATA / ("done-" + Path(accounts_path).name)).write_text("ok", encoding="utf-8")
+        except Exception:
+            pass
         with _state_lock:
-            STATE["running"] = False
-            STATE["finished_at"] = time.time()
-            if STATE["run_dir"]:
                 STATE["history"].append({"dir": STATE["run_dir"], "ok": ok,
                                          "stats": dict(checker.stats)})
         _log(f"run done ok={ok}: {accounts_path}")
@@ -261,8 +263,14 @@ class Handler(BaseHTTPRequestHandler):
             self._send(200, json.dumps(st, ensure_ascii=False).encode(),
                        "application/json")
         elif path == "/results":
+            rd = None
             with _state_lock:
                 rd = STATE.get("run_dir")
+            if not rd or not Path(rd).exists():
+                # process-restart giu nguyen disk container: quet run moi nhat
+                runs = sorted((BASE / "results").glob("run-*"),
+                              key=lambda p: p.stat().st_mtime)
+                rd = str(runs[-1]) if runs else None
             if not rd or not Path(rd).exists():
                 self._send(200, b"chua co run nao", "text/plain")
                 return
@@ -301,7 +309,6 @@ class Handler(BaseHTTPRequestHandler):
         self._send(200, json.dumps({"ok": True, "file": path,
                                     "lines": len(text.splitlines())}).encode(),
                    "application/json")
-
 
 def _track_run_dir():
     """Cap nhat STATE.run_dir theo checker.OUT_DIR (checker tao moi moi run)."""
@@ -360,7 +367,18 @@ def main():
     if acc:
         _log("accounts tu env — auto start")
         submit_accounts(acc)
-
+    # BOOT SELF-HEAL (2026-10-31): process-restart giu nguyen disk container —
+    # combo chua co marker done- -> tu chay lai (Render restart mat state in-memory)
+    def _heal():
+        time.sleep(5)
+        for p in sorted(DATA.glob("combo-*.txt"), key=lambda x: x.stat().st_mtime):
+            if (DATA / ("done-" + p.name)).exists():
+                continue
+            if p.stat().st_size < 10:
+                continue
+            _log(f"self-heal: phuc hoi combo {p.name}")
+            submit_accounts(p.read_text(encoding="utf-8"))
+    threading.Thread(target=_heal, daemon=True).start()
     srv = ThreadingHTTPServer(("0.0.0.0", PORT), Handler)
     _log(f"dashboard: http://0.0.0.0:{PORT}/ (upload POST /upload)")
     srv.serve_forever()
