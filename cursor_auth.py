@@ -111,26 +111,41 @@ except Exception as _e:
     log.warning(f"Khong load duoc _captured_signals.txt ({_e}) -> dung signals TINH CU (nguy co radar!)")
 
 
-def _signals_b64(ua=None):
-    """Generate base64-encoded fingerprint signals blob (fresh timestamps).
+def _rand_b64_hash():
+    """Hash 43 chars base64url (32 bytes) — format giong canvas/audio hash that."""
+    return base64.urlsafe_b64encode(random.getrandbits(256).to_bytes(32, "big")).decode().rstrip("=")
 
-    2026-10-31: WorkOS cham DO TUOI cua blob (probe: blob cu -> radar 28%,
-    blob moi -> 15%). Refresh TAT CA *AtMs (createdAtMs/collectedAtMs/
-    submittedAtMs) + jitter timings nhe — khong chi createdAtMs nhu cu.
-    userAgent phai KHOP header cua session.
+
+_SCREEN_POOL = [(1920, 1080), (1536, 864), (1366, 768), (2560, 1440), (1440, 900), (1280, 800), (1680, 1050)]
+
+
+def _signals_b64(ua=None):
+    """Generate base64-encoded signals blob — DEVICE PERSONA MOI MOI LOGIN.
+
+    2026-10-31 (dem): WorkOS flag theo DEVICE-HASH (canvas/audio/webGL identical
+    9,000 lan -> radar 43% overnight). Timestamps refresh chi lam cham (23%).
+    Fix: random hash-set + screen/hw/memory moi login = "thiet bi moi", khong tich luy.
     """
     sig = dict(_BASE_SIGNALS)
     now = int(time.time() * 1000)
     sig["createdAtMs"] = now - random.randint(3000, 9000)
     sig["collectedAtMs"] = sig["createdAtMs"] - random.randint(500, 2000)
     sig["submittedAtMs"] = now
-    if isinstance(sig.get("timings"), dict):
-        t = dict(sig["timings"])
-        if "collectorsStarted" in t:
-            t["collectorsStarted"] = random.randint(10, 40)
-        sig["timings"] = t
+    for k in ("canvasHash", "audioHash", "webGLParamsHash", "mathHash", "intlHash"):
+        if k in sig:
+            sig[k] = _rand_b64_hash()
+    w, h = random.choice(_SCREEN_POOL)
+    avail_h = h - random.choice((40, 48, 56, 72))
+    if isinstance(sig.get("screen"), dict):
+        sc = dict(sig["screen"])
+        sc.update({"width": w, "height": h, "availWidth": w, "availHeight": avail_h})
+        sig["screen"] = sc
+    sig["hardwareConcurrency"] = random.choice((4, 6, 8, 8, 12, 16))
+    sig["deviceMemory"] = random.choice((4, 8, 8, 16))
+    sig["evalStringLength"] = 33 + random.randint(0, 4)
     sig["userAgent"] = ua or UA
     return base64.b64encode(json.dumps(sig, separators=(",", ":")).encode()).decode()
+
 def _boundary():
     return "----WebKitFormBoundary" + "".join(
         random.choices(string.ascii_letters + string.digits, k=16)
