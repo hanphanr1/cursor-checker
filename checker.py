@@ -120,7 +120,7 @@ def clear_results():
 def write_result(category, line):
     with file_lock:
         fname = {
-            "TERMINAL": "terminal.txt",
+
             "HIT": "hits.txt", "FREE": "free.txt", "RETRY": "retry.txt",
             "FAIL": "fail.txt", "ERROR": "error.txt",
             "BADFORMAT": "badformat.txt", "CUSTOM": "custom.txt",
@@ -130,10 +130,8 @@ def write_result(category, line):
             f.write(line + "\n")
 
 
-# 2026-10-30: radar-challenge WorkOS = FLAG THEO EMAIL (verify: email moi qua IP nha
-# chay sach; acc semih radar x4 qua 3 proxy + IP nha + browser that). Acc da flag
-# khong save bang IP/fingerprint -> radar >=2 lan trong run => TERMINAL, khong retry.
-_radar_seen = {}
+# 2026-10-30..11-01: radar tung dan TERMINAL (flag email x2) — BO 11-01 theo yeu cau
+# user: radar = RETRY thuan nhu code goc (checker.py:168).
 
 
 def check_via_login(email, password, proxy_pool, captcha_solver, use_proxy):
@@ -165,11 +163,7 @@ def check_via_login(email, password, proxy_pool, captcha_solver, use_proxy):
             or "connect" in info_l
             or "timeout" in info_l
         )
-        if "radar" in info_l:
-            _radar_seen[email] = _radar_seen.get(email, 0) + 1
-            if _radar_seen[email] >= 2:
-                proxy_pool.checkin(p, failed=True)
-                return "TERMINAL", f"radar x{_radar_seen[email]} (flag theo email, khong retry): {info}"
+        # 2026-11-01: radar = RETRY thuan nhu code goc (user request — bo TERMINAL)
         if cat in ("ERROR", "RETRY") and switchable:
             proxy_pool.checkin(p, failed=True)
             last_err = info

@@ -232,7 +232,7 @@ MAX_RETRY_ROUNDS = 4
 MARKERS = {
     "HIT": "[+]",
     "FREE": "[F]",
-    "TERMINAL": "[T]",
+
     "FAIL": "[-]",
     "ERROR": "[!]",
     "BADFORMAT": "[X]",
